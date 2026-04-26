@@ -25,15 +25,18 @@ function renderBoard() {
     }
 }
 
-function handleClick(x, y, cube) {
+function handleClick(x, y, group) {
     if (board[y][x] !== "" || gameOver) return;
     board[y][x] = currentPlayer;
 
-    if (currentPlayer === "O") {
-        cube.material.color.set(0x0000ff);// 青色
+    let piece;
+    if (currentPlayer === 'O') {
+        piece = createO();
     } else {
-        cube.material.color.set(0xff0000);// 赤色
+        piece = createX();
     }
+
+    group.add(piece);
 
     const winner = checkWinner();
     if (winner) {
@@ -111,17 +114,24 @@ const mouse = new THREE.Vector2();
 
 //キューブ生成
 function createCell3D(x, y) {
+   
+    const group = new THREE.Group();
+    group.position.x = x - 1;
+    group.position.y = 1 - y;
+
+    group.userData = { x: x, y: y};
+
     const geometry = new THREE.BoxGeometry(0.9, 0.9, 0.9);
-    const material = new THREE.MeshBasicMaterial({ color: 0xaaaaaa});
+    const material = new THREE.MeshBasicMaterial({
+        color: 0xaaaaaa,
+        transparent: true,
+        opacity: 0.3 // クリック可能なセルを半透明にする
+    });
+
     const cube = new THREE.Mesh(geometry, material);
+    group.add(cube);
 
-    cube.position.x = x - 1; // -1, 0, 1の位置に配置
-    cube.position.y = 1 - y; // 1, 0, -1の位置に配置
-    
-    // 👇これ超重要
-    cube.userData = { x: x, y: y, cube: cube };
-
-    scene.add(cube);
+    scene.add(group);
 }
 
 //配置
@@ -141,14 +151,21 @@ mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
     
     const intersects = raycaster.intersectObjects(scene.children, true);
+    console.log(intersects);
 
     if (intersects.length > 0) {
-        const cube = intersects[0].object;
+        let obj = intersects[0].object;
 
-        const { x, y } = cube.userData;
+        //親をたどってgroupを見つける
+        while (obj.parent && obj.userData.x === undefined) {
+            obj = obj.parent;
+        }
+        const group = obj;
+
+        const { x, y } = group.userData;
 
         //ここで既存のクリック処理を呼び出す
-        handleClick(x, y, cube);
+        handleClick(x, y, group);
     }
 });
 
@@ -158,3 +175,25 @@ function animate() {
     renderer.render(scene, camera);
 }
 animate();
+
+function createO() {
+    const geometry = new THREE.SphereGeometry(0.3, 32, 32);
+    const material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+    return new THREE.Mesh(geometry, material);  
+}
+
+function createX() {
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+
+    const bar1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.1), material);
+    const bar2 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.1), material);
+
+    bar1.rotation.z = Math.PI / 4;
+    bar2.rotation.z = -Math.PI / 4;
+
+    const group = new THREE.Group();
+    group.add(bar1);
+    group.add(bar2);
+
+    return group;
+}
