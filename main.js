@@ -25,9 +25,16 @@ function renderBoard() {
     }
 }
 
-function handleClick(x, y) {
+function handleClick(x, y, cube) {
     if (board[y][x] !== "" || gameOver) return;
     board[y][x] = currentPlayer;
+
+    if (currentPlayer === "O") {
+        cube.material.color.set(0x0000ff);// 青色
+    } else {
+        cube.material.color.set(0xff0000);// 赤色
+    }
+
     const winner = checkWinner();
     if (winner) {
         statusText.textContent = winner + " wins!";
@@ -138,12 +145,10 @@ mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     if (intersects.length > 0) {
         const cube = intersects[0].object;
 
-        cube.material.color.set(0xff0000); //クリックしたキューブを赤くする
-
         const { x, y } = cube.userData;
 
         //ここで既存のクリック処理を呼び出す
-        handleClick(x, y);
+        handleClick(x, y, cube);
     }
 });
 
