@@ -41,7 +41,7 @@ function handleClick(x, y) {
         currentPlayer = currentPlayer === 'O' ? 'X' : 'O';
         statusText.textContent = currentPlayer + "'s turn";
     }
-    renderBoard();
+    //renderBoard();
 }
 
 function checkWinner() {
@@ -78,7 +78,7 @@ function isDraw() {
 
 // 初期化
 statusText.textContent = currentPlayer + "'s turn";
-renderBoard();
+//renderBoard(); コメントアウト
 
 // ===== ここからThree.jsの追加 =====
 
@@ -99,6 +99,9 @@ document.body.appendChild(renderer.domElement);
 
 camera.position.z = 5;
 
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
 //キューブ生成
 function createCell3D(x, y) {
     const geometry = new THREE.BoxGeometry(0.9, 0.9, 0.9);
@@ -108,6 +111,9 @@ function createCell3D(x, y) {
     cube.position.x = x - 1; // -1, 0, 1の位置に配置
     cube.position.y = 1 - y; // 1, 0, -1の位置に配置
     
+    // 👇これ超重要
+    cube.userData = { x: x, y: y, cube: cube };
+
     scene.add(cube);
 }
 
@@ -117,6 +123,29 @@ for (let y = 0; y < 3; y++) {
         createCell3D(x, y);
     }
 }
+
+renderer.domElement.addEventListener("pointerdown", (event) => {
+
+const rect = renderer.domElement.getBoundingClientRect();
+
+mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    
+    const intersects = raycaster.intersectObjects(scene.children, true);
+
+    if (intersects.length > 0) {
+        const cube = intersects[0].object;
+
+        cube.material.color.set(0xff0000); //クリックしたキューブを赤くする
+
+        const { x, y } = cube.userData;
+
+        //ここで既存のクリック処理を呼び出す
+        handleClick(x, y);
+    }
+});
 
 //描画
 function animate() {
