@@ -1,8 +1,8 @@
-const board = [
-    ['', '', ''],
-    ['', '', ''],
-    ['', '', '']
-];
+const board = Array.from({ length: 3 }, () =>
+    Array.from({ length: 3 }, () =>
+        Array(3).fill("")
+    )
+);
 
 let currentPlayer = 'O';
 let gameOver = false;
@@ -25,17 +25,13 @@ function renderBoard() {
     }
 }
 
-function handleClick(x, y, group) {
-    if (board[y][x] !== "" || gameOver) return;
-    board[y][x] = currentPlayer;
+function handleClick(x, y, z, group) {
+    if (board[z][y][x] !== "" || gameOver) return;
+    
+    board[z][y][x] = currentPlayer;
 
-    let piece;
-    if (currentPlayer === 'O') {
-        piece = createO();
-    } else {
-        piece = createX();
-    }
-
+    const piece = currentPlayer === 'O' ? createO() : createX();
+    
     group.add(piece);
 
     const winner = checkWinner();
@@ -55,7 +51,7 @@ function handleClick(x, y, group) {
 }
 
 function checkWinner() {
-    const lines = [
+    /*const lines = [
         // 横
         [[0,0],[1,0],[2,0]],
         [[0,1],[1,1],[2,1]],
@@ -78,12 +74,13 @@ function checkWinner() {
         ) {
             return board[a[1]][a[0]];
         }
-    }
+    }*/
+
     return null;
 }
 
 function isDraw() {
-    return board.flat().every(cell => cell !== "");
+    return board.flat(2).every(cell => cell !== "");
 }
 
 // 初期化
@@ -113,19 +110,20 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 //キューブ生成
-function createCell3D(x, y) {
+function createCell3D(x, y, z) {
    
     const group = new THREE.Group();
     group.position.x = x - 1;
     group.position.y = 1 - y;
+    group.position.z = z - 1; // z座標も追加;
 
-    group.userData = { x: x, y: y};
+    group.userData = { x, y, z };
 
     const geometry = new THREE.BoxGeometry(0.9, 0.9, 0.9);
     const material = new THREE.MeshBasicMaterial({
         color: 0xaaaaaa,
         transparent: true,
-        opacity: 0.3 // クリック可能なセルを半透明にする
+        opacity: 0.2 // クリック可能なセルを半透明にする
     });
 
     const cube = new THREE.Mesh(geometry, material);
@@ -137,7 +135,9 @@ function createCell3D(x, y) {
 //配置
 for (let y = 0; y < 3; y++) {
     for (let x = 0; x < 3; x++) {
-        createCell3D(x, y);
+        for (let z = 0; z < 3; z++) {
+            createCell3D(x, y, z);
+        }
     }
 }
 
@@ -162,10 +162,10 @@ mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
         }
         const group = obj;
 
-        const { x, y } = group.userData;
+        const { x, y, z } = group.userData;
 
         //ここで既存のクリック処理を呼び出す
-        handleClick(x, y, group);
+        handleClick(x, y, z, group);
     }
 });
 
