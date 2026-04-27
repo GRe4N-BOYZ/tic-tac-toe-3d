@@ -51,30 +51,56 @@ function handleClick(x, y, z, group) {
 }
 
 function checkWinner() {
-    /*const lines = [
-        // 横
-        [[0,0],[1,0],[2,0]],
-        [[0,1],[1,1],[2,1]],
-        [[0,2],[1,2],[2,2]],
-        // 縦
-        [[0,0],[0,1],[0,2]],
-        [[1,0],[1,1],[1,2]],
-        [[2,0],[2,1],[2,2]],
-        // 斜め
-        [[0,0],[1,1],[2,2]],
-        [[2,0],[1,1],[0,2]],
-    ];
-        
-    for (let line of lines) {
-        const [a, b, c] = line;
-        if (
-            board[a[1]][a[0]] &&
-            board[a[1]][a[0]] === board[b[1]][b[0]] &&
-            board[a[1]][a[0]] === board[c[1]][c[0]]
-        ) {
-            return board[a[1]][a[0]];
+    const lines = [];
+
+    // ===== 横・縦（各層） =====
+    for (let z = 0; z < 3; z++) {
+        for (let i = 0; i < 3; i++) {
+            // 横
+            lines.push([[0,i,z],[1,i,z],[2,i,z]]);
+            // 縦
+            lines.push([[i,0,z],[i,1,z],[i,2,z]]);
         }
-    }*/
+
+        // 斜め
+        lines.push([[0,0,z],[1,1,z],[2,2,z]]);
+        lines.push([[2,0,z],[1,1,z],[0,2,z]]);
+    }
+
+    // ===== 奥行き方向 =====
+    for (let x = 0; x < 3; x++) {
+        for (let y = 0; y < 3; y++) {
+            lines.push([[x,y,0],[x,y,1],[x,y,2]]);
+        }
+    }
+
+    // ===== 縦方向の斜め =====
+    for (let i = 0; i < 3; i++) {
+        lines.push([[0,i,0],[1,i,1],[2,i,2]]);
+        lines.push([[2,i,0],[1,i,1],[0,i,2]]);
+
+        lines.push([[i,0,0],[i,1,1],[i,2,2]]);
+        lines.push([[i,2,0],[i,1,1],[i,0,2]]);
+    }
+
+    // ===== 完全な立体対角線 =====
+    lines.push([[0,0,0],[1,1,1],[2,2,2]]);
+    lines.push([[2,0,0],[1,1,1],[0,2,2]]);
+    lines.push([[0,2,0],[1,1,1],[2,0,2]]);
+    lines.push([[2,2,0],[1,1,1],[0,0,2]]);
+
+    // ===== 判定 =====
+    for (let line of lines) {
+        const [[x1,y1,z1],[x2,y2,z2],[x3,y3,z3]] = line;
+
+        const v1 = board[z1][y1][x1];
+        const v2 = board[z2][y2][x2];
+        const v3 = board[z3][y3][x3];
+
+        if (v1 && v1 === v2 && v1 === v3) {
+            return v1;
+        }
+    }
 
     return null;
 }
@@ -103,8 +129,23 @@ const camera = new THREE.PerspectiveCamera(
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+renderer.setClearColor(0x222222);
 
-camera.position.z = 5;
+//コントローラー
+/*const controls = new OrbitControls(camera, renderer.domElement);
+
+controls.enableDamping = true; // ぬるっと動く
+controls.dampingFactor = 0.05;
+
+controls.screenSpacePanning = false;
+
+controls.minDistance = 3;
+controls.maxDistance = 10;*/
+
+
+camera.position.set(4, 4, 6);
+camera.lookAt(0, 0, 0);
+
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -154,7 +195,7 @@ mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     console.log(intersects);
 
     if (intersects.length > 0) {
-        let obj = intersects[0].object;
+        let obj = intersects[intersects.length - 1].object;
 
         //親をたどってgroupを見つける
         while (obj.parent && obj.userData.x === undefined) {
@@ -172,6 +213,9 @@ mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 //描画
 function animate() {
     requestAnimationFrame(animate);
+
+    //controls.update();
+
     renderer.render(scene, camera);
 }
 animate();
