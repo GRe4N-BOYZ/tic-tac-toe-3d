@@ -7,7 +7,7 @@ const board = Array.from({ length: 3 }, () =>
 let currentPlayer = 'O';
 let gameOver = false;
 let currentLayer = 1; // 0, 1, 2のいずれかを指定して、現在操作している層を管理
-
+let winningLine = null; // 勝利ラインを保存する変数
 
 const boardDiv = document.getElementById("board");
 const statusText = document.getElementById("status");
@@ -16,7 +16,9 @@ const resetBtn = document.getElementById("resetBtn");
 resetBtn.addEventListener("click", resetGame);
 
 function resetGame() {
-    // ゲーム状態のリセット
+    winningLine = null; // 勝利ラインリセット
+
+    // ボード初期化
     for (let z = 0; z < 3; z++) {
         for (let y = 0; y < 3; y++) {
             for (let x = 0; x < 3; x++) {
@@ -25,22 +27,34 @@ function resetGame() {
         }
     }
 
+    // O/X削除
     scene.children.forEach(group => {
         if (group.userData) {
-            // cube以外を削除
-            group.children.forEach(child => {
+            for (let i = group.children.length - 1; i >= 0; i--) {
+                const child = group.children[i];
                 if (child !== group.userData.cube) {
-                    group.remove(child); // ← これが本物の削除✨
+                    group.remove(child);
                 }
-            });
+            }
+
+            const cube = group.userData.cube;
+
+            // 色と透明度リセット
+            cube.material.color.set(0xaaaaaa);
+
+            // emissive使ってた場合
+            if (cube.material.emissive) {
+                cube.material.emissive.set(0x000000);
+            }
+
         }
     });
 
-    // 3Dオブジェクトのリセット
+    // 状態リセット
     currentPlayer = 'O';
     gameOver = false;
     currentLayer = 1;
-    statusText.textContent = currentPlayer + "'s turn"; 
+    statusText.textContent = currentPlayer + "'s turn";
 
     updateLayerVisual();
 }
@@ -74,6 +88,7 @@ function handleClick(x, y, z, group) {
         statusText.textContent = winner.player + " wins!";
         gameOver = true;
 
+        winningLine = winner.line; // 勝利ラインを保存
         highlightLine(winner.line);
     }
     else if (isDraw()) {
@@ -218,7 +233,7 @@ function createCell3D(x, y, z) {
     const material = new THREE.MeshBasicMaterial({
         color: 0xaaaaaa,
         transparent: true,
-        opacity: z === currentLayer ? 0.5 : 0.1 // クリック可能なセルを半透明にする
+        opacity: z === currentLayer ? 0.5 : 0.4 // クリック可能なセルを半透明にする
     });
 
     const cube = new THREE.Mesh(geometry, material);
@@ -237,6 +252,8 @@ for (let y = 0; y < 3; y++) {
         }
     }
 }
+
+updateLayerVisual(); // ←ここ✨
 
 renderer.domElement.addEventListener("wheel", (event) => {
     event.preventDefault();
@@ -314,9 +331,18 @@ function createX() {
 
 function updateLayerVisual() {
     scene.children.forEach(group => {
-        const { z, cube } = group.userData;
+        if(!group.userData) return;
+        const { x, y, z, cube } = group.userData;
 
         if (!cube) return;
+
+        if (winningLine && winningLine.some(([lx, ly, lz]) =>
+            lx === x && ly === y && lz === z
+        )) {
+            cube.material.color.set(0xffee00); // 勝利ラインは黄色✨
+            cube.material.opacity = 0.7;
+            return;
+        }
 
         if (z === currentLayer) {
             cube.material.opacity = 0.5; // 現在の層は半透明
