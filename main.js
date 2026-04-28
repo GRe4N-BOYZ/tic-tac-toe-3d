@@ -8,8 +8,9 @@ let currentPlayer = 'O';
 let gameOver = false;
 let currentLayer = 1; // 0, 1, 2のいずれかを指定して、現在操作している層を管理
 let winningLine = null; // 勝利ラインを保存する変数
-
+let hoverTarget = null;
 let displayLayer = currentLayer; // 表示用の変数（勝利ライン表示のために分ける）
+let pulseTime = 0;
 
 const boardDiv = document.getElementById("board");
 const statusText = document.getElementById("status");
@@ -301,17 +302,21 @@ renderer.domElement.addEventListener("pointerdown", (event) => {
     for (let hit of intersects) {
         let obj = hit.object;
 
-        // 親をたどってgroupを見つける
-        while (obj.parent && obj.userData.x === undefined) {
+        // 親をたどる（安全版✨）
+        while (obj.parent && (!obj.userData || obj.userData.x === undefined)) {
             obj = obj.parent;
         }
 
-        const { x, y, z } = obj.userData;
+        // userDataなかったらスキップ
+        if (!obj.userData) continue;
+
+        const { x, y, z, cube } = obj.userData;
 
         // 今の層だけ許可
         if (z === currentLayer) {
             handleClick(x, y, z, obj);
-            break; // ← ここ超重要🔥
+            hoverTarget = cube; // クリックしたセルを保存
+            break;
         }
     }
 });
@@ -330,12 +335,60 @@ function animate() {
 }
 animate();
 
+renderer.domElement.addEventListener("pointermove", (event) => {
+
+    const rect = renderer.domElement.getBoundingClientRect();
+
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(scene.children, true);
+
+    // 前のホバー消す
+    if (hoverTarget) {
+        updateLayerVisual();
+        hoverTarget = null;
+    }
+
+    for (let hit of intersects) {
+        let obj = hit.object;
+
+        while (obj.parent && (!obj.userData || obj.userData.x === undefined)) {
+            obj = obj.parent;
+        }
+
+        if (!obj.userData) continue;
+
+        const { x, y, z, cube } = obj.userData;
+
+        if (z === currentLayer) {
+            cube.material.color.set(0x00ffff); // 水色で光る✨
+            cube.material.opacity = 1.0;
+
+            hoverTarget = cube;
+            break;
+        }
+    }
+});
+
 function updateLayerVisualSmooth(layer) {
+
     scene.children.forEach(group => {
+        
+
         if (!group.userData) return;
 
         const { x, y, z, cube } = group.userData;
         if (!cube) return;
+
+        // ホバー中は優先✨
+        if (hoverTarget === cube) {
+        cube.material.color.set(0x00ffff);
+        cube.material.opacity = 1.0;
+        return;
+}
 
         // 勝利ライン優先✨
         if (winningLine && winningLine.some(([lx, ly, lz]) =>
