@@ -1,7 +1,51 @@
-body {
-    text-align: center;
-    font-family: sans-serif;
+button {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    padding: 12px 18px;
+    margin: 5px;
+    border: none;
+    border-radius: 8px;
+    
+    color: white;
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+
+    box-shadow:
+        0 4px #000,
+        0 0 10px rgba(0, 255, 255, 0.3);
+
+    cursor: pointer;
+    transition: all 0.1s ease;
+
+    min-width: 80px;
+    touch-action: manipulation;
 }
+
+button:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px #000;
+}
+
+button:hover {
+    background: linear-gradient(145deg, #00ffff, #0088ff);
+    color: black;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Orbitron', sans-serif;
+    color: white;
+    background-color: #333;
+}
+/* UI styles →top */
+#ui {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
 #board {
     display: grid;
     grid-template-columns: repeat(3, 100px);
@@ -23,4 +67,16 @@ body {
     margin-top: 10px;
     padding: 10px 20px;
     font-size: 16px;
+}
+
+#layerUp {
+    background: linear-gradient(145deg, #00ffcc, #0099cc);
+}
+
+#layerDown {
+    background: linear-gradient(145deg, #ff66cc, #cc0099);
+}
+
+#resetBtn {
+    background: linear-gradient(145deg, #ff4444, #aa0000);
 }

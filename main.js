@@ -9,14 +9,33 @@ let gameOver = false;
 let currentLayer = 1; // 0, 1, 2のいずれかを指定して、現在操作している層を管理
 let winningLine = null; // 勝利ラインを保存する変数
 
+let displayLayer = currentLayer; // 表示用の変数（勝利ライン表示のために分ける）
+
 const boardDiv = document.getElementById("board");
 const statusText = document.getElementById("status");
+const layerText = document.getElementById("layerText");
+
 const resetBtn = document.getElementById("resetBtn");
+const layerUpBtn = document.getElementById("layerUp");
+const layerDownBtn = document.getElementById("layerDown");
+
+layerUpBtn.addEventListener("click", () => {
+    currentLayer = Math.min(2, currentLayer + 1);
+    updateLayerVisual();
+});
+layerDownBtn.addEventListener("click", () => {
+    currentLayer = Math.max(0, currentLayer - 1);
+    updateLayerVisual();
+});
 
 resetBtn.addEventListener("click", resetGame);
 
 function resetGame() {
     winningLine = null; // 勝利ラインリセット
+
+    camera.position.set(5, 5, 5);
+    camera.lookAt(0, 0, 0);
+
 
     // ボード初期化
     for (let z = 0; z < 3; z++) {
@@ -214,7 +233,7 @@ controls.minDistance = 3;
 controls.maxDistance = 10;
 
 
-camera.position.set(4, 4, 6);
+camera.position.set(5, 5, 5);
 camera.lookAt(0, 0, 0);
 
 
@@ -225,7 +244,7 @@ const mouse = new THREE.Vector2();
 function createCell3D(x, y, z) {
    
     const group = new THREE.Group();
-    group.position.set(x - 1, 1 - y, z - 1); // x, y, z座標を設定
+    group.position.set(x - 1, z - 1, 1 - y); // x, y, z座標を設定
 
     group.userData = { x, y, z };
 
@@ -255,7 +274,7 @@ for (let y = 0; y < 3; y++) {
 
 updateLayerVisual(); // ←ここ✨
 
-renderer.domElement.addEventListener("wheel", (event) => {
+/*renderer.domElement.addEventListener("wheel", (event) => { // ホイールで層移動　（PC向けの操作なので、モバイルではボタンで切り替える方式に変更）
     event.preventDefault();
 
     if (event.deltaY < 0) {
@@ -266,7 +285,7 @@ renderer.domElement.addEventListener("wheel", (event) => {
     currentLayer = Math.max(0, Math.min(2, currentLayer)); // 0〜2の範囲に制限
 
     updateLayerVisual();
-}, { passive: false });
+}, { passive: false });*/
 
 renderer.domElement.addEventListener("pointerdown", (event) => {
 
@@ -299,13 +318,50 @@ renderer.domElement.addEventListener("pointerdown", (event) => {
 
 //描画
 function animate() {
+    const speed = winningLine ? 0.2 : 0.1; // 勝利ライン表示中はゆっくり移動
+
     requestAnimationFrame(animate);
 
-    controls.update();
+    displayLayer += (currentLayer - displayLayer) * speed; // なめらかに移動
+
+    updateLayerVisualSmooth(displayLayer); // なめらか表示用の更新関数
 
     renderer.render(scene, camera);
 }
 animate();
+
+function updateLayerVisualSmooth(layer) {
+    scene.children.forEach(group => {
+        if (!group.userData) return;
+
+        const { x, y, z, cube } = group.userData;
+        if (!cube) return;
+
+        // 勝利ライン優先✨
+        if (winningLine && winningLine.some(([lx, ly, lz]) =>
+            lx === x && ly === y && lz === z
+        )) {
+            cube.material.color.set(0xffee00);
+            cube.material.opacity = 0.9;
+            return;
+        }
+
+        // 🌊 距離ベースでなめらか表示
+        const diff = Math.abs(z - layer);
+
+        // 近いほど濃く、遠いほど薄く
+        const opacity = 0.7 - diff * 0.4;
+
+        cube.material.opacity = Math.max(0.1, opacity);
+
+        // 色も少し変えると見やすい✨
+        if (diff < 0.3) {
+            cube.material.color.set(0xffffff);
+        } else {
+            cube.material.color.set(0x777777);
+        }
+    });
+}
 
 function createO() {
     const geometry = new THREE.SphereGeometry(0.3, 32, 32);
@@ -331,25 +387,31 @@ function createX() {
 
 function updateLayerVisual() {
     scene.children.forEach(group => {
-        if(!group.userData) return;
-        const { x, y, z, cube } = group.userData;
+        if (!group.userData) return;
 
+        const { x, y, z, cube } = group.userData;
         if (!cube) return;
 
+        // 勝利ライン優先✨
         if (winningLine && winningLine.some(([lx, ly, lz]) =>
             lx === x && ly === y && lz === z
         )) {
-            cube.material.color.set(0xffee00); // 勝利ラインは黄色✨
-            cube.material.opacity = 0.7;
+            cube.material.color.set(0xffee00);
+            cube.material.opacity = 0.9;
             return;
         }
 
+        // 通常表示
         if (z === currentLayer) {
-            cube.material.opacity = 0.5; // 現在の層は半透明
-            cube.material.color.set(0xffffff); // 現在の層は白っぽくする
+            cube.material.opacity = 0.7;
+            cube.material.color.set(0xffffff);
         } else {
-            cube.material.opacity = 0.4; // 他の層は薄くする
-            cube.material.color.set(0x777777); // 他の層はグレーにする
+            cube.material.opacity = 0.25;
+            cube.material.color.set(0x777777);
         }
-    })
+    });
+
+    // 層表示もここで更新🔥
+    layerText.textContent = "Layer: " + (currentLayer + 1);
 }
+

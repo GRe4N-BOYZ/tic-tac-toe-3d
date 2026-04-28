@@ -10,13 +10,26 @@
 
     <!-- 👇 ここを変更（超重要） -->
     <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <h1>〇✕ゲーム</h1>
-    <div id="board"></div>
+    <!-- <div id="board"></div> 3D版はこのdivは不要なので削除 -->
+
+<div id = "ui">
+
+        <h1>Tic Tac Toe 3D</h1>
+    
+    <p id = "layerText">current layer: 1</p>
+
     <p id="status"></p>
-    <button id="resetBtn">Reset</button>
+
+    <button id = "layerUp">↑</button>
+    <button id = "layerDown">↓</button>
+    <button id = "resetBtn">Reset</button>
+
+</div>
 
     <script src="main.js"></script>
 </body>
