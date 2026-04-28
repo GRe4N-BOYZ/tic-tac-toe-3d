@@ -110,6 +110,10 @@ function handleClick(x, y, z, group) {
 
         winningLine = winner.line; // 勝利ラインを保存
         highlightLine(winner.line);
+
+        spawnParticles();
+
+        document.getElementById("winSound").play();
     }
     else if (isDraw()) {
         statusText.textContent = "It's a draw!";
@@ -121,6 +125,7 @@ function handleClick(x, y, z, group) {
     }
     //renderBoard();
 }
+
 
 function highlightLine(line) {
     line.forEach(([x, y, z]) => {
@@ -332,6 +337,14 @@ function animate() {
     updateLayerVisualSmooth(displayLayer); // なめらか表示用の更新関数
 
     renderer.render(scene, camera);
+
+    pulseTime += 0.1;
+
+    scene.children.forEach(obj => {
+        if (obj.userData && obj.userData.velocity) {
+            obj.position.add(obj.userData.velocity);
+        }
+    });
 }
 animate();
 
@@ -394,8 +407,10 @@ function updateLayerVisualSmooth(layer) {
         if (winningLine && winningLine.some(([lx, ly, lz]) =>
             lx === x && ly === y && lz === z
         )) {
-            cube.material.color.set(0xffee00);
-            cube.material.opacity = 0.9;
+            const pulse = (Math.sin(pulseTime) + 1) / 2;
+            
+            cube.material.color.setRGB(1, 1, pulse);
+            cube.material.opacity = 0.7 + pulse * 0.3;
             return;
         }
 
@@ -468,3 +483,24 @@ function updateLayerVisual() {
     layerText.textContent = "Layer: " + (currentLayer + 1);
 }
 
+function spawnParticles() {
+    for (let i = 0; i < 50; i++) {
+        const geo = new THREE.SphereGeometry(0.05, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+
+        const p = new THREE.Mesh(geo, mat);
+
+        p.position.set(0, 0, 0);
+
+        p.userData.velocity = new THREE.Vector3(
+            (Math.random() - 0.5) * 0.2,
+            Math.random() * 0.2,
+            (Math.random() - 0.5) * 0.2
+        );
+
+        scene.add(p);
+
+        // 自動削除
+        setTimeout(() => scene.remove(p), 1000);
+    }
+}
