@@ -203,7 +203,7 @@ document.body.appendChild(renderer.domElement);
 renderer.setClearColor(0x222222);
 
 //コントローラー
-/*const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
 controls.enableDamping = true; // ぬるっと動く
 controls.dampingFactor = 0.05;
@@ -211,7 +211,7 @@ controls.dampingFactor = 0.05;
 controls.screenSpacePanning = false;
 
 controls.minDistance = 3;
-controls.maxDistance = 10;*/
+controls.maxDistance = 10;
 
 
 camera.position.set(4, 4, 6);
@@ -301,7 +301,7 @@ renderer.domElement.addEventListener("pointerdown", (event) => {
 function animate() {
     requestAnimationFrame(animate);
 
-    //controls.update();
+    controls.update();
 
     renderer.render(scene, camera);
 }
