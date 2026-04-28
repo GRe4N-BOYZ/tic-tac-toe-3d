@@ -6,9 +6,44 @@ const board = Array.from({ length: 3 }, () =>
 
 let currentPlayer = 'O';
 let gameOver = false;
+let currentLayer = 1; // 0, 1, 2のいずれかを指定して、現在操作している層を管理
+
 
 const boardDiv = document.getElementById("board");
 const statusText = document.getElementById("status");
+const resetBtn = document.getElementById("resetBtn");
+
+resetBtn.addEventListener("click", resetGame);
+
+function resetGame() {
+    // ゲーム状態のリセット
+    for (let z = 0; z < 3; z++) {
+        for (let y = 0; y < 3; y++) {
+            for (let x = 0; x < 3; x++) {
+                board[z][y][x] = "";
+            }
+        }
+    }
+
+    scene.children.forEach(group => {
+        if (group.userData) {
+            // cube以外を削除
+            group.children.forEach(child => {
+                if (child !== group.userData.cube) {
+                    group.remove(child); // ← これが本物の削除✨
+                }
+            });
+        }
+    });
+
+    // 3Dオブジェクトのリセット
+    currentPlayer = 'O';
+    gameOver = false;
+    currentLayer = 1;
+    statusText.textContent = currentPlayer + "'s turn"; 
+
+    updateLayerVisual();
+}
 
 function renderBoard() {
     boardDiv.innerHTML = '';
@@ -36,8 +71,10 @@ function handleClick(x, y, z, group) {
 
     const winner = checkWinner();
     if (winner) {
-        statusText.textContent = winner + " wins!";
+        statusText.textContent = winner.player + " wins!";
         gameOver = true;
+
+        highlightLine(winner.line);
     }
     else if (isDraw()) {
         statusText.textContent = "It's a draw!";
@@ -48,6 +85,25 @@ function handleClick(x, y, z, group) {
         statusText.textContent = currentPlayer + "'s turn";
     }
     //renderBoard();
+}
+
+function highlightLine(line) {
+    line.forEach(([x, y, z]) => {
+
+        scene.children.forEach(group => {
+            if (!group.userData) return;
+
+            const data = group.userData;
+
+            if (data.x === x && data.y === y && data.z === z) {
+                const cube = data.cube;
+
+                cube.material.color.set(0xffee00); // 黄色✨
+                cube.material.opacity = 0.8;
+            }
+        });
+
+    });
 }
 
 function checkWinner() {
@@ -98,7 +154,7 @@ function checkWinner() {
         const v3 = board[z3][y3][x3];
 
         if (v1 && v1 === v2 && v1 === v3) {
-            return v1;
+            return { player: v1, line };
         }
     }
 
@@ -154,9 +210,7 @@ const mouse = new THREE.Vector2();
 function createCell3D(x, y, z) {
    
     const group = new THREE.Group();
-    group.position.x = x - 1;
-    group.position.y = 1 - y;
-    group.position.z = z - 1; // z座標も追加;
+    group.position.set(x - 1, 1 - y, z - 1); // x, y, z座標を設定
 
     group.userData = { x, y, z };
 
@@ -164,11 +218,13 @@ function createCell3D(x, y, z) {
     const material = new THREE.MeshBasicMaterial({
         color: 0xaaaaaa,
         transparent: true,
-        opacity: 0.2 // クリック可能なセルを半透明にする
+        opacity: z === currentLayer ? 0.5 : 0.1 // クリック可能なセルを半透明にする
     });
 
     const cube = new THREE.Mesh(geometry, material);
     group.add(cube);
+
+    group.userData.cube = cube;
 
     scene.add(group);
 }
@@ -182,31 +238,45 @@ for (let y = 0; y < 3; y++) {
     }
 }
 
+renderer.domElement.addEventListener("wheel", (event) => {
+    event.preventDefault();
+
+    if (event.deltaY < 0) {
+        currentLayer++;
+    } else {
+        currentLayer--;
+    }
+    currentLayer = Math.max(0, Math.min(2, currentLayer)); // 0〜2の範囲に制限
+
+    updateLayerVisual();
+}, { passive: false });
+
 renderer.domElement.addEventListener("pointerdown", (event) => {
 
-const rect = renderer.domElement.getBoundingClientRect();
+    const rect = renderer.domElement.getBoundingClientRect();
 
-mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
     
     const intersects = raycaster.intersectObjects(scene.children, true);
-    console.log(intersects);
 
-    if (intersects.length > 0) {
-        let obj = intersects[intersects.length - 1].object;
+    for (let hit of intersects) {
+        let obj = hit.object;
 
-        //親をたどってgroupを見つける
+        // 親をたどってgroupを見つける
         while (obj.parent && obj.userData.x === undefined) {
             obj = obj.parent;
         }
-        const group = obj;
 
-        const { x, y, z } = group.userData;
+        const { x, y, z } = obj.userData;
 
-        //ここで既存のクリック処理を呼び出す
-        handleClick(x, y, z, group);
+        // 今の層だけ許可
+        if (z === currentLayer) {
+            handleClick(x, y, z, obj);
+            break; // ← ここ超重要🔥
+        }
     }
 });
 
@@ -240,4 +310,20 @@ function createX() {
     group.add(bar2);
 
     return group;
+}
+
+function updateLayerVisual() {
+    scene.children.forEach(group => {
+        const { z, cube } = group.userData;
+
+        if (!cube) return;
+
+        if (z === currentLayer) {
+            cube.material.opacity = 0.5; // 現在の層は半透明
+            cube.material.color.set(0xffffff); // 現在の層は白っぽくする
+        } else {
+            cube.material.opacity = 0.4; // 他の層は薄くする
+            cube.material.color.set(0x777777); // 他の層はグレーにする
+        }
+    })
 }
