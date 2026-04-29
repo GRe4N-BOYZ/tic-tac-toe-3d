@@ -224,6 +224,13 @@ const camera = new THREE.PerspectiveCamera(
 //レンダラー
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
+
+window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
 document.body.appendChild(renderer.domElement);
 renderer.setClearColor(0x222222);
 
@@ -239,7 +246,7 @@ controls.minDistance = 3;
 controls.maxDistance = 10;
 
 
-camera.position.set(5, 5, 5);
+camera.position.set(3, 3, 3);
 camera.lookAt(0, 0, 0);
 
 
@@ -250,7 +257,9 @@ const mouse = new THREE.Vector2();
 function createCell3D(x, y, z) {
    
     const group = new THREE.Group();
-    group.position.set(x - 1, z - 1, 1 - y); // x, y, z座標を設定
+    group.position.set(
+        (x - 1) * 1.1, (z - 1) * 1.1, (1 - y) * 1.1
+    ); // x, y, z座標を設定
 
     group.userData = { x, y, z };
 
