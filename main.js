@@ -34,7 +34,7 @@ resetBtn.addEventListener("click", resetGame);
 function resetGame() {
     winningLine = null; // 勝利ラインリセット
 
-    camera.position.set(5, 5, 5);
+    camera.position.set(4, 4, 4);
     camera.lookAt(0, 0, 0);
 
 
@@ -246,7 +246,7 @@ controls.minDistance = 3;
 controls.maxDistance = 10;
 
 
-camera.position.set(3, 3, 3);
+camera.position.set(4, 4, 4);
 camera.lookAt(0, 0, 0);
 
 
