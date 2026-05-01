@@ -37,6 +37,14 @@ body {
     color: white;
     background-color: #333;
 }
+
+#layerText, #status {
+    font-size: 32px;      /* デカく */
+    font-weight: bold;    /* 太く */
+    text-align: center;   /* 中央寄せ */
+    line-height: 1.4;     /* 行間 */
+}
+
 /* UI styles →top */
 #ui {
     position: absolute;
@@ -44,11 +52,15 @@ body {
     left: 20px;
     transform: translateY(-50%);
 
-    display: flex;
-    flex-direction: column;
     gap: 15px;
 
     z-index: 10;
+}
+
+#buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
 }
 
 #board {
@@ -67,11 +79,6 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-}
-#resetBtn {
-    margin-top: 10px;
-    padding: 10px 20px;
-    font-size: 16px;
 }
 
 #layerUp {
@@ -97,21 +104,12 @@ body {
         width: 100%;
         height: 40%;
 
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
 
-        background: rgba(0, 0, 0, 0.6);
     }
 
     button {
         font-size: 24px;
         padding: 18px 28px;
         margin: 10px;
-    }
-
-    #layerText, #status {
-        font-size: 24px;
     }
 }
