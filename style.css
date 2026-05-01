@@ -5,8 +5,22 @@ button {
     margin: 8px;
     border: none;
     border-radius: 10px;
+    
+    color: white;
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
 
-    /* mobile styles */
+    box-shadow:
+        0 4px #000,
+        0 0 10px rgba(0, 255, 255, 0.3);
+
+    cursor: pointer;
+    transition: all 0.1s ease;
+
+    min-width: 80px;
+    touch-action: manipulation;
+}
+
+ /* mobile styles */
     @media (max-width: 768px) {
         #ui {
             position: absolute;
@@ -34,20 +48,6 @@ button {
             font-size: 24px;
         }
     }
-    
-    color: white;
-    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-
-    box-shadow:
-        0 4px #000,
-        0 0 10px rgba(0, 255, 255, 0.3);
-
-    cursor: pointer;
-    transition: all 0.1s ease;
-
-    min-width: 80px;
-    touch-action: manipulation;
-}
 
 button:active {
     transform: translateY(4px);
