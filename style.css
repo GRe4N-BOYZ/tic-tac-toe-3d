@@ -1,8 +1,8 @@
 button {
     font-family: 'Orbitron', sans-serif;
-    font-size: 20px;
-    padding: 14px 22px;
-    margin: 8px;
+    font-size: 24px;
+    padding: 18px 28px;
+    margin: 10px;
     border: none;
     border-radius: 10px;
 
@@ -99,12 +99,33 @@ body {
         position: absolute;
         bottom: 0;
         left: 0;
+        top: auto;
         transform: none;
 
         width: 100%;
-        height: 40%;
+        height: 35%;
 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding-bottom: 20px;
+        background: rgba(0, 0, 0, 0.3);
 
+        gap: 5px;
+    }
+
+    #layerText, #status {    /* 32pxはデカすぎたので少し小さく */
+        line-height: 1.2;   /* 行間を詰める */
+    }
+
+    #buttons {
+        margin-top: 5px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
     button {
