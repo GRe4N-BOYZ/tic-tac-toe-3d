@@ -122,8 +122,6 @@ canvas {
     background: linear-gradient(145deg, #ff4444, #aa0000);
 }
 
-}
-
 /* PC版: デフォルト（横並び） */
 @media (min-width: 769px) {
     #ui {
