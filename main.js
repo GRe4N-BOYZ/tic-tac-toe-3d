@@ -33,10 +33,30 @@ resetBtn.addEventListener("click", resetGame);
 
 function resetGame() {
     winningLine = null; // 勝利ラインリセット
+    pulseTime = 0; // パルスリセット
+    displayLayer = 1; // 表示層リセット
 
+    // --- ここからカメラリセットの修正 ---
+    
+    // 1. 一旦、慣性を切る
+    controls.enableDamping = false;
+
+    // 2. 先に OrbitControls の中心点（ターゲット）を原点に戻す
+    controls.target.set(0, 0, 0);
+
+    // 3. カメラ位置をセット
     camera.position.set(4, 4, 4);
-    camera.lookAt(0, 0, 0);
+    
+    // 4. 強制的に更新して、現在の位置を「基準」として覚え込ませる
+    controls.update();
 
+    // 5. その状態でレイアウト調整を実行（スマホ等のズレ補正）
+    applyLayout();
+
+    // 6. 最後に慣性を戻す
+    controls.enableDamping = true;
+
+    // --- カメラリセット終了 ---
 
     // ボード初期化
     for (let z = 0; z < 3; z++) {
@@ -47,28 +67,33 @@ function resetGame() {
         }
     }
 
-    // O/X削除
-    scene.children.forEach(group => {
-        if (group.userData) {
-            for (let i = group.children.length - 1; i >= 0; i--) {
-                const child = group.children[i];
-                if (child !== group.userData.cube) {
-                    group.remove(child);
-                }
+    // 3Dオブジェクトのクリーンアップ（逆順ループ）
+ // おすすめの合体版
+for (let i = scene.children.length - 1; i >= 0; i--) {
+    const obj = scene.children[i];
+
+    if (obj.userData && obj.userData.cube) {
+        const group = obj;
+        for (let j = group.children.length - 1; j >= 0; j--) {
+            const child = group.children[j];
+            if (child !== group.userData.cube) {
+                group.remove(child); // 駒を削除
             }
-
-            const cube = group.userData.cube;
-
-            // 色と透明度リセット
-            cube.material.color.set(0xaaaaaa);
-
-            // emissive使ってた場合
-            if (cube.material.emissive) {
-                cube.material.emissive.set(0x000000);
-            }
-
         }
-    });
+        // キューブの状態を完全リセット
+        const cube = group.userData.cube;
+        cube.material.color.set(0xaaaaaa);
+        cube.material.opacity = 0.4;
+        if (cube.material.emissive) {
+            cube.material.emissive.set(0x000000); // 光り輝きを消す
+        }
+    }
+
+    // パーティクルも掃除
+    if (obj.userData && obj.userData.isParticle) {
+        scene.remove(obj);
+    }
+}
 
     // 状態リセット
     currentPlayer = 'O';
@@ -78,6 +103,39 @@ function resetGame() {
 
     updateLayerVisual();
 }
+
+function applyLayout() {
+    const isMobile = window.innerWidth <= 768;
+
+    if (isMobile) {
+        // --- 調整ポイント ---
+        // この数値（0.2）を大きくするほど、Cubeが「上」に行きます。
+        // UIが画面の下半分を占めるなら、0.2 〜 0.3 くらいがベストです。
+        const offset = window.innerHeight * 0.26; // 画面高さの26%をオフセットに設定
+
+        camera.setViewOffset(
+            window.innerWidth, window.innerHeight, // 元のサイズ
+            0, offset,                             // xは0, yにプラスのオフセット
+            window.innerWidth, window.innerHeight  // 描画するサイズ
+        );
+    } else {
+        // PC版：ズレをリセットして中央に
+        camera.clearViewOffset();
+    }
+
+    // カメラの位置とターゲットは常に固定（リセット時のガタつき防止）
+    camera.position.set(4, 4, 4);
+    controls.target.set(0, 0, 0);
+    controls.update();
+}
+
+// ウィンドウサイズが変わった時も実行
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    applyLayout(); 
+});
 
 function renderBoard() {
     boardDiv.innerHTML = '';
@@ -355,6 +413,7 @@ function animate() {
         }
     });
 }
+applyLayout(); // 初期レイアウト調整
 animate();
 
 renderer.domElement.addEventListener("pointermove", (event) => {
