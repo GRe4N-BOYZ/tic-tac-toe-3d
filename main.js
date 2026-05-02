@@ -38,27 +38,11 @@ function resetGame() {
     pulseTime = 0; // パルスリセット
     displayLayer = 1; // 表示層リセット
 
-    // --- ここからカメラリセットの修正 ---
-    
-    // 1. 一旦、慣性を切る
-    controls.enableDamping = false;
-
-    // 2. 先に OrbitControls の中心点（ターゲット）を原点に戻す
-    controls.target.set(0, 0, 0);
-
-    // 3. カメラ位置をセット
+    // カメラの初期状態に戻す
     camera.position.set(4, 4, 4);
-    
-    // 4. 強制的に更新して、現在の位置を「基準」として覚え込ませる
+    controls.target.set(0, 0, 0);
     controls.update();
 
-    // 5. その状態でレイアウト調整を実行（スマホ等のズレ補正）
-    applyLayout();
-
-    // 6. 最後に慣性を戻す
-    controls.enableDamping = true;
-
-    // --- カメラリセット終了 ---
 
     // ボード初期化
     for (let z = 0; z < 3; z++) {
@@ -106,41 +90,6 @@ for (let i = scene.children.length - 1; i >= 0; i--) {
     updateLayerVisual();
 }
 
-function applyLayout() {
-
-    if (isMobile) {
-        // --- 調整ポイント ---
-        // この数値（0.2）を大きくするほど、Cubeが「上」に行きます。
-        // UIが画面の下半分を占めるなら、0.2 〜 0.3 くらいがベストです。
-        const offset = window.innerHeight * 0.26; // 画面高さの26%をオフセットに設定
-
-        camera.setViewOffset(
-            window.innerWidth, window.innerHeight, // 元のサイズ
-            0, offset,                             // xは0, yにプラスのオフセット
-            window.innerWidth, window.innerHeight  // 描画するサイズ
-        );
-
-
-    } else {
-        // PC版：ズレをリセットして中央に
-        camera.clearViewOffset();
-    }
-
-    // カメラの位置とターゲットは常に固定（リセット時のガタつき防止）
-    camera.position.set(4, 4, 4);
-    controls.target.set(0, 0, 0);
-    controls.update();
-}
-
-// ウィンドウサイズが変わった時も実行
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    applyLayout(); 
-
-    handleDeviceChange(); // ←これ追加✨
-});
 
 function renderBoard() {
     boardDiv.innerHTML = '';
@@ -189,7 +138,7 @@ function handleClick(x, y, z, group) {
     //renderBoard();
 }
 
-function handleDeviceChange() {
+/*function handleDeviceChange() {
 
     if (isMobile) {
         // 📱スマホになったとき
@@ -197,7 +146,7 @@ function handleDeviceChange() {
         hoverTarget = null; // ホバー消す
         updateLayerVisual(); // 見た目リセット
     }
-}
+}*/
 
 function highlightLine(line) {
     line.forEach(([x, y, z]) => {
@@ -295,26 +244,32 @@ const camera = new THREE.PerspectiveCamera(
 
 //レンダラー
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// renderer のサイズをキャンバス要素に合わせる
+function updateRendererSize() {
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    
+    renderer.setSize(width, height, false); // 第3引数: DPR を自動計算しない
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+}
+
+updateRendererSize();
 
 window.addEventListener("resize", () => {
     isMobile = window.innerWidth <= 768;
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    applyLayout();
-    handleDeviceChange(); // ←これ追加✨
+    updateRendererSize();
 });
 
-document.body.appendChild(renderer.domElement);
 renderer.setClearColor(0x222222);
 
 //コントローラー
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
-controls.enableDamping = true; // ぬるっと動く
-controls.dampingFactor = 0.05;
-
+controls.enableDamping = false; // 慣性を無効化して即座に応答
 controls.screenSpacePanning = false;
 
 controls.minDistance = 3;
@@ -363,19 +318,6 @@ for (let y = 0; y < 3; y++) {
 }
 
 updateLayerVisual(); // ←ここ✨
-
-/*renderer.domElement.addEventListener("wheel", (event) => { // ホイールで層移動　（PC向けの操作なので、モバイルではボタンで切り替える方式に変更）
-    event.preventDefault();
-
-    if (event.deltaY < 0) {
-        currentLayer++;
-    } else {
-        currentLayer--;
-    }
-    currentLayer = Math.max(0, Math.min(2, currentLayer)); // 0〜2の範囲に制限
-
-    updateLayerVisual();
-}, { passive: false });*/
 
 renderer.domElement.addEventListener("pointerdown", (event) => {
 
@@ -436,6 +378,8 @@ function animate() {
 
     updateLayerVisualSmooth(displayLayer); // なめらか表示用の更新関数
 
+    controls.update(); // ← 必須！damping を有効にしているため毎フレーム呼ぶ必要がある
+
     renderer.render(scene, camera);
 
     pulseTime += 0.1;
@@ -446,7 +390,6 @@ function animate() {
         }
     });
 }
-applyLayout(); // 初期レイアウト調整
 animate();
 
 
