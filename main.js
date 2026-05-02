@@ -1,3 +1,14 @@
+function setRealViewportHeight() {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+// 初回
+setRealViewportHeight();
+
+// リサイズ時（超重要🔥）
+window.addEventListener('resize', setRealViewportHeight);
+
 const board = Array.from({ length: 3 }, () =>
     Array.from({ length: 3 }, () =>
         Array(3).fill("")

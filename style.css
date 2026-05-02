@@ -1,3 +1,11 @@
+:root {
+    --vh: 1vh;
+}
+
+body {
+    height: calc(var(--vh) * 100);
+}
+
 button {
     font-family: 'Orbitron', sans-serif;
     font-size: 24px;
