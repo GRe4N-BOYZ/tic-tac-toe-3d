@@ -275,6 +275,13 @@ window.addEventListener("resize", () => {
     updateRendererSize();
 });
 
+// ブラウザツールバー表示/非表示時の対応
+if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", () => {
+        updateRendererSize();
+    });
+}
+
 renderer.setClearColor(0x222222);
 
 //コントローラー
