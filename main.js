@@ -11,6 +11,7 @@ let winningLine = null; // 勝利ラインを保存する変数
 let hoverTarget = null;
 let displayLayer = currentLayer; // 表示用の変数（勝利ライン表示のために分ける）
 let pulseTime = 0;
+let isMobile = window.innerWidth <= 768; // 画面幅768px以下をモバイルと判断
 
 const boardDiv = document.getElementById("board");
 const statusText = document.getElementById("status");
@@ -19,6 +20,7 @@ const layerText = document.getElementById("layerText");
 const resetBtn = document.getElementById("resetBtn");
 const layerUpBtn = document.getElementById("layerUp");
 const layerDownBtn = document.getElementById("layerDown");
+
 
 layerUpBtn.addEventListener("click", () => {
     currentLayer = Math.min(2, currentLayer + 1);
@@ -105,7 +107,6 @@ for (let i = scene.children.length - 1; i >= 0; i--) {
 }
 
 function applyLayout() {
-    const isMobile = window.innerWidth <= 768;
 
     if (isMobile) {
         // --- 調整ポイント ---
@@ -118,6 +119,8 @@ function applyLayout() {
             0, offset,                             // xは0, yにプラスのオフセット
             window.innerWidth, window.innerHeight  // 描画するサイズ
         );
+
+
     } else {
         // PC版：ズレをリセットして中央に
         camera.clearViewOffset();
@@ -135,6 +138,8 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     applyLayout(); 
+
+    handleDeviceChange(); // ←これ追加✨
 });
 
 function renderBoard() {
@@ -184,6 +189,15 @@ function handleClick(x, y, z, group) {
     //renderBoard();
 }
 
+function handleDeviceChange() {
+
+    if (isMobile) {
+        // 📱スマホになったとき
+
+        hoverTarget = null; // ホバー消す
+        updateLayerVisual(); // 見た目リセット
+    }
+}
 
 function highlightLine(line) {
     line.forEach(([x, y, z]) => {
@@ -284,9 +298,12 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 window.addEventListener("resize", () => {
+    isMobile = window.innerWidth <= 768;
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    applyLayout();
+    handleDeviceChange(); // ←これ追加✨
 });
 
 document.body.appendChild(renderer.domElement);
@@ -387,7 +404,23 @@ renderer.domElement.addEventListener("pointerdown", (event) => {
         // 今の層だけ許可
         if (z === currentLayer) {
             handleClick(x, y, z, obj);
-            hoverTarget = cube; // クリックしたセルを保存
+            
+            // ⭐スマホだけ一瞬光らせる
+            if (isMobile) {
+
+                hoverTarget = cube; // ←これ追加や！！！
+
+                cube.material.color.set(0x00ffff);
+                cube.material.opacity = 1.0;
+
+                setTimeout(() => {
+                    hoverTarget = null; // ←これも重要✨
+                    updateLayerVisual();
+                }, 200); // 0.2秒で戻す
+            } else {
+                hoverTarget = cube; // クリックしたセルを保存
+            }
+            
             break;
         }
     }
@@ -416,7 +449,10 @@ function animate() {
 applyLayout(); // 初期レイアウト調整
 animate();
 
+
 renderer.domElement.addEventListener("pointermove", (event) => {
+
+    if (isMobile || gameOver) return; // モバイルはホバーなし、ゲームオーバー後もホバーなし
 
     const rect = renderer.domElement.getBoundingClientRect();
 
