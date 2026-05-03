@@ -2,7 +2,9 @@ function setRealViewportHeight() {
     const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     const vh = viewportHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
+    document.documentElement.style.setProperty('--app-height', `${viewportHeight}px`);
     document.body.style.height = `${viewportHeight}px`;
+    document.body.style.minHeight = `${viewportHeight}px`;
     document.body.style.maxHeight = `${viewportHeight}px`;
 }
 
@@ -445,6 +447,9 @@ window.addEventListener("resize", () => {
 // ブラウザツールバー表示/非表示時の対応
 if (window.visualViewport) {
     window.visualViewport.addEventListener("resize", () => {
+        updateRendererSize();
+    });
+    window.visualViewport.addEventListener("scroll", () => {
         updateRendererSize();
     });
 }
