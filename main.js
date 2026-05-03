@@ -187,7 +187,7 @@ function resetGame() {
     displayLayer = 1; // 表示層リセット
 
     // カメラの初期状態に戻す
-    camera.position.set(4, 4, 4);
+    camera.position.set(5, 5, 5);
     controls.target.set(0, 0, 0);
     controls.update();
 
@@ -466,7 +466,7 @@ controls.minDistance = 3;
 controls.maxDistance = 10;
 
 
-camera.position.set(4, 4, 4);
+camera.position.set(5, 5, 5);
 camera.lookAt(0, 0, 0);
 
 
