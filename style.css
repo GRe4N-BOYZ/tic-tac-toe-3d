@@ -250,50 +250,83 @@ button.active {
     body {
         display: flex;
         flex-direction: column;
+        height: var(--app-height);
+        min-height: var(--app-height);
+        max-height: var(--app-height);
+        overflow: hidden;
     }
 
     canvas {
-        flex: 1;
+        flex: 0 0 58%;
+        width: 100%;
+        height: auto;
+        min-height: 220px;
+        max-height: 58%;
+        display: block;
         order: 1;
-        min-height: 0;
+    }
+
+    #title {
+        order: 0;
+        width: 100%;
+        margin: 0 auto;
     }
 
     #ui {
+        order: 2;
         width: 100%;
         max-width: 100%;
-        height: auto;
-        max-height: 45%;
-        order: 2;
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        padding: 15px 10px;
-        padding-bottom: calc(15px + env(safe-area-inset-bottom));
-        background: rgba(0, 0, 0, 0.8);
+        justify-content: flex-start;
+        padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+        background: rgba(0, 0, 0, 0.92);
         gap: 8px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        box-sizing: border-box;
+    }
+
+    #modeButtons,
+    #difficultyButtons {
+        gap: 8px;
+        width: 100%;
+    }
+
+    #modeButtons button,
+    #difficultyButtons button {
+        flex: 1 1 48%;
+        min-width: 90px;
     }
 
     #layerText, #status {
-        font-size: 32px;
+        font-size: 22px;
         line-height: 1.2;
         margin: 0;
-        padding: 10px 15px;
-        border: 1.5px solid #00ffff;
+        padding: 8px 12px;
+        border: 1.2px solid #00ffff;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     #buttons {
         flex-direction: row;
-        justify-content: center;
+        justify-content: space-between;
         flex-wrap: wrap;
         gap: 8px;
+        width: 100%;
         margin-top: 5px;
     }
 
-    button {
-        font-size: 18px;
-        padding: 12px 20px;
+    #buttons button {
+        font-size: 16px;
+        padding: 10px 12px;
         margin: 0;
-        width: auto;
+        flex: 1 1 30%;
+        min-width: 88px;
     }
 }
 
