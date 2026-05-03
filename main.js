@@ -1,5 +1,5 @@
 function setRealViewportHeight() {
-    const vh = window.innerHeight * 0.01;
+    const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
 }
 
@@ -8,6 +8,10 @@ setRealViewportHeight();
 
 // リサイズ時（超重要🔥）
 window.addEventListener('resize', setRealViewportHeight);
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', setRealViewportHeight);
+    window.visualViewport.addEventListener('scroll', setRealViewportHeight);
+}
 
 const board = Array.from({ length: 3 }, () =>
     Array.from({ length: 3 }, () =>
