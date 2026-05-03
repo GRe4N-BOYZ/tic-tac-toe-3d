@@ -1,6 +1,9 @@
 function setRealViewportHeight() {
-    const vh = (window.visualViewport ? window.visualViewport.height : window.innerHeight) * 0.01;
+    const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const vh = viewportHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
+    document.body.style.height = `${viewportHeight}px`;
+    document.body.style.maxHeight = `${viewportHeight}px`;
 }
 
 // 初回
@@ -8,9 +11,16 @@ setRealViewportHeight();
 
 // リサイズ時（超重要🔥）
 window.addEventListener('resize', setRealViewportHeight);
+window.addEventListener('orientationchange', setRealViewportHeight);
 if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', setRealViewportHeight);
-    window.visualViewport.addEventListener('scroll', setRealViewportHeight);
+    window.visualViewport.addEventListener('resize', () => {
+        setRealViewportHeight();
+        updateRendererSize();
+    });
+    window.visualViewport.addEventListener('scroll', () => {
+        setRealViewportHeight();
+        updateRendererSize();
+    });
 }
 
 const board = Array.from({ length: 3 }, () =>

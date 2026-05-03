@@ -6,6 +6,13 @@
     box-sizing: border-box;
 }
 
+html, body {
+    height: 100%;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+}
+
 html {
     height: 100%;
 }
@@ -73,6 +80,7 @@ body {
     width: 100%;
     height: calc(var(--vh, 1vh) * 100);
     min-height: calc(var(--vh, 1vh) * 100);
+    max-height: 100dvh;
 }
 
 #title {
