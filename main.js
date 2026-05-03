@@ -31,6 +31,17 @@ const layerText = document.getElementById("layerText");
 const resetBtn = document.getElementById("resetBtn");
 const layerUpBtn = document.getElementById("layerUp");
 const layerDownBtn = document.getElementById("layerDown");
+const localModeBtn = document.getElementById("localModeBtn");
+const cpuModeBtn = document.getElementById("cpuModeBtn");
+const easyBtn = document.getElementById("easyBtn");
+const normalBtn = document.getElementById("normalBtn");
+const hardBtn = document.getElementById("hardBtn");
+
+let gameMode = "local";
+let cpuDifficulty = "normal";
+let cpuMoveTimeout = null;
+const cpuSymbol = 'X';
+const humanSymbol = 'O';
 
 
 layerUpBtn.addEventListener("click", () => {
@@ -43,6 +54,116 @@ layerDownBtn.addEventListener("click", () => {
 });
 
 resetBtn.addEventListener("click", resetGame);
+localModeBtn.addEventListener("click", () => setGameMode("local"));
+cpuModeBtn.addEventListener("click", () => setGameMode("cpu"));
+easyBtn.addEventListener("click", () => setCpuDifficulty("easy"));
+normalBtn.addEventListener("click", () => setCpuDifficulty("normal"));
+hardBtn.addEventListener("click", () => setCpuDifficulty("hard"));
+
+function setGameMode(mode) {
+    gameMode = mode;
+    updateModeButtons();
+    if (gameMode === "cpu" && currentPlayer === cpuSymbol && !gameOver) {
+        scheduleCpuMove(300);
+    }
+}
+
+function setCpuDifficulty(level) {
+    cpuDifficulty = level;
+    updateModeButtons();
+}
+
+function updateModeButtons() {
+    localModeBtn.classList.toggle("active", gameMode === "local");
+    cpuModeBtn.classList.toggle("active", gameMode === "cpu");
+    easyBtn.classList.toggle("active", cpuDifficulty === "easy");
+    normalBtn.classList.toggle("active", cpuDifficulty === "normal");
+    hardBtn.classList.toggle("active", cpuDifficulty === "hard");
+}
+
+function scheduleCpuMove(delay = 300) {
+    if (cpuMoveTimeout) {
+        clearTimeout(cpuMoveTimeout);
+    }
+    cpuMoveTimeout = setTimeout(() => {
+        cpuMoveTimeout = null;
+        makeCpuMove();
+    }, delay);
+}
+
+function makeCpuMove() {
+    if (gameOver || gameMode !== "cpu" || currentPlayer !== cpuSymbol) return;
+
+    const move = chooseCpuMove(currentLayer);
+    if (!move) return;
+
+    const group = getGroupAt(move.x, move.y, move.z);
+    if (group) {
+        handleClick(move.x, move.y, move.z, group);
+    }
+}
+
+function getGroupAt(x, y, z) {
+    return scene.children.find(group => group.userData && group.userData.x === x && group.userData.y === y && group.userData.z === z);
+}
+
+function chooseCpuMove(layer) {
+    const available = getAvailableMoves(layer);
+    if (available.length === 0) return null;
+
+    if (cpuDifficulty === "easy") {
+        return available[Math.floor(Math.random() * available.length)];
+    }
+
+    const winMove = findImmediateWinningMove(cpuSymbol, layer);
+    if (winMove) return winMove;
+
+    const blockMove = findImmediateWinningMove(humanSymbol, layer);
+    if (blockMove) return blockMove;
+
+    if (cpuDifficulty === "hard") {
+        const center = available.find(c => c.x === 1 && c.y === 1);
+        if (center) return center;
+
+        const corner = available.find(c => isCorner(c.x, c.y));
+        if (corner) return corner;
+    }
+
+    return available[Math.floor(Math.random() * available.length)];
+}
+
+function getAvailableMoves(layer) {
+    const moves = [];
+    for (let y = 0; y < 3; y++) {
+        for (let x = 0; x < 3; x++) {
+            if (board[layer][y][x] === "") {
+                moves.push({ x, y, z: layer });
+            }
+        }
+    }
+    return moves;
+}
+
+function findImmediateWinningMove(symbol, layer) {
+    for (let y = 0; y < 3; y++) {
+        for (let x = 0; x < 3; x++) {
+            if (board[layer][y][x] !== "") continue;
+
+            board[layer][y][x] = symbol;
+            const winner = checkWinner();
+            board[layer][y][x] = "";
+
+            if (winner && winner.player === symbol) {
+                return { x, y, z: layer };
+            }
+        }
+    }
+    return null;
+}
+
+function isCorner(x, y) {
+    return (x === 0 || x === 2) && (y === 0 || y === 2);
+}
 
 function resetGame() {
     winningLine = null; // 勝利ラインリセット
@@ -98,7 +219,15 @@ for (let i = scene.children.length - 1; i >= 0; i--) {
     currentLayer = 1;
     statusText.textContent = currentPlayer + "'s turn";
 
+    if (cpuMoveTimeout) {
+        clearTimeout(cpuMoveTimeout);
+        cpuMoveTimeout = null;
+    }
+
     updateLayerVisual();
+    if (gameMode === "cpu" && currentPlayer === cpuSymbol) {
+        scheduleCpuMove(300);
+    }
 }
 
 
@@ -145,6 +274,9 @@ function handleClick(x, y, z, group) {
     else {
         currentPlayer = currentPlayer === 'O' ? 'X' : 'O';
         statusText.textContent = currentPlayer + "'s turn";
+        if (gameMode === "cpu" && currentPlayer === cpuSymbol) {
+            scheduleCpuMove(300);
+        }
     }
     //renderBoard();
 }
