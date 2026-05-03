@@ -110,7 +110,7 @@ function scheduleCpuMove(delay = 300) {
 function makeCpuMove() {
     if (gameOver || gameMode !== "cpu" || currentPlayer !== cpuSymbol) return;
 
-    const move = chooseCpuMove(currentLayer);
+    const move = chooseCpuMove();
     if (!move) return;
 
     const group = getGroupAt(move.x, move.y, move.z);
@@ -123,28 +123,52 @@ function getGroupAt(x, y, z) {
     return scene.children.find(group => group.userData && group.userData.x === x && group.userData.y === y && group.userData.z === z);
 }
 
-function chooseCpuMove(layer) {
-    const available = getAvailableMoves(layer);
+function chooseCpuMove() {
+    // 1. 全ての層（0, 1, 2）から空いているマスをすべてリストアップ
+    const available = [];
+    for (let z = 0; z < 3; z++) {
+        for (let y = 0; y < 3; y++) {
+            for (let x = 0; x < 3; x++) {
+                if (board[z][y][x] === "") {
+                    available.push({ x, y, z });
+                }
+            }
+        }
+    }
+
     if (available.length === 0) return null;
 
+    // --- Easy: 完全にランダム ---
     if (cpuDifficulty === "easy") {
         return available[Math.floor(Math.random() * available.length)];
     }
 
-    const winMove = findImmediateWinningMove(cpuSymbol, layer);
+    // --- Normal & Hard 共通：勝利と防御のチェック ---
+    // 自分が勝てる手があるか？
+    const winMove = findImmediateWinningMoveGlobal(cpuSymbol);
     if (winMove) return winMove;
 
-    const blockMove = findImmediateWinningMove(humanSymbol, layer);
+    // 相手が勝つのを阻止するか？
+    const blockMove = findImmediateWinningMoveGlobal(humanSymbol);
     if (blockMove) return blockMove;
 
+    // --- Hard 専用：定石（中央・角）を狙う ---
     if (cpuDifficulty === "hard") {
+        // 真ん中の層(z=1)の真ん中(x=1, y=1)は最強地点
+        const superCenter = available.find(c => c.x === 1 && c.y === 1 && c.z === 1);
+        if (superCenter) return superCenter;
+
+        // それ以外の各層の中央
         const center = available.find(c => c.x === 1 && c.y === 1);
         if (center) return center;
 
+        // 各層の角[cite: 1]
         const corner = available.find(c => isCorner(c.x, c.y));
         if (corner) return corner;
     }
 
+    // --- Normal の着地点（または Hard で角も空いていない場合） ---
+    // リーチがなければランダムに打つ
     return available[Math.floor(Math.random() * available.length)];
 }
 
@@ -160,17 +184,19 @@ function getAvailableMoves(layer) {
     return moves;
 }
 
-function findImmediateWinningMove(symbol, layer) {
-    for (let y = 0; y < 3; y++) {
-        for (let x = 0; x < 3; x++) {
-            if (board[layer][y][x] !== "") continue;
+function findImmediateWinningMoveGlobal(symbol) {
+    for (let z = 0; z < 3; z++) {
+        for (let y = 0; y < 3; y++) {
+            for (let x = 0; x < 3; x++) {
+                if (board[z][y][x] !== "") continue;
 
-            board[layer][y][x] = symbol;
-            const winner = checkWinner();
-            board[layer][y][x] = "";
+                board[z][y][x] = symbol; // 仮に置いてみる
+                const winner = checkWinner(); // 立体全方向チェック！
+                board[z][y][x] = ""; // 元に戻す
 
-            if (winner && winner.player === symbol) {
-                return { x, y, z: layer };
+                if (winner && winner.player === symbol) {
+                    return { x, y, z };
+                }
             }
         }
     }
@@ -294,18 +320,7 @@ function handleClick(x, y, z, group) {
             scheduleCpuMove(300);
         }
     }
-    //renderBoard();
 }
-
-/*function handleDeviceChange() {
-
-    if (isMobile) {
-        // 📱スマホになったとき
-
-        hoverTarget = null; // ホバー消す
-        updateLayerVisual(); // 見た目リセット
-    }
-}*/
 
 function highlightLine(line) {
     line.forEach(([x, y, z]) => {
@@ -387,7 +402,6 @@ function isDraw() {
 
 // 初期化
 statusText.textContent = currentPlayer + "'s turn";
-//renderBoard(); コメントアウト
 
 // ===== ここからThree.jsの追加 =====
 
@@ -404,17 +418,6 @@ const camera = new THREE.PerspectiveCamera(
 //レンダラー
 const renderer = new THREE.WebGLRenderer();
 document.body.appendChild(renderer.domElement);
-
-// renderer のサイズをキャンバス要素に合わせる
-/*function updateRendererSize() {
-    const rect = renderer.domElement.getBoundingClientRect();
-    const width = Math.max(1, Math.round(rect.width));
-    const height = Math.max(1, Math.round(rect.height));
-
-    renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-}*/
 
 function updateRendererSize() {
     const canvas = renderer.domElement;
@@ -580,27 +583,6 @@ function animate() {
         }
     });
 }
-
-// アニメーションループ内で常にチェック（ツールバー表示等の変化に対応）
-/*function animate() {
-    requestAnimationFrame(animate);
-    
-    // レイアウト変更に即座に対応
-    updateRendererSize();
-
-    // 既存の処理
-    displayLayer += (currentLayer - displayLayer) * (winningLine ? 0.2 : 0.1);
-    updateLayerVisualSmooth(displayLayer);
-    controls.update();
-    renderer.render(scene, camera);
-    
-    pulseTime += 0.1;
-    scene.children.forEach(obj => {
-        if (obj.userData && obj.userData.velocity) {
-            obj.position.add(obj.userData.velocity);
-        }
-    });
-}*/
 
 animate();
 
