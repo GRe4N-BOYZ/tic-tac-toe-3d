@@ -258,21 +258,42 @@ const renderer = new THREE.WebGLRenderer();
 document.body.appendChild(renderer.domElement);
 
 // renderer のサイズをキャンバス要素に合わせる
-function updateRendererSize() {
-    const canvas = renderer.domElement;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    
-    renderer.setSize(width, height, false); // 第3引数: DPR を自動計算しない
+/*function updateRendererSize() {
+    const rect = renderer.domElement.getBoundingClientRect();
+    const width = Math.max(1, Math.round(rect.width));
+    const height = Math.max(1, Math.round(rect.height));
+
+    renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+}*/
+
+function updateRendererSize() {
+    const canvas = renderer.domElement;
+    // CSSによって決定された実際の表示サイズを取得
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+
+    // 解像度を更新（第3引数falseで、styleのwidth/heightを書き換えない）
+    if (renderer.domElement.width !== width || renderer.domElement.height !== height) {
+        renderer.setSize(width, height, false);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+    }
 }
 
 updateRendererSize();
 
+window.addEventListener('load', updateRendererSize);
+
 window.addEventListener("resize", () => {
     isMobile = window.innerWidth <= 768;
-    updateRendererSize();
+    requestAnimationFrame(updateRendererSize);
+
+    setTimeout(() => {
+        // 端末UIの表示/非表示に対応するために2回更新
+        updateRendererSize();
+    }, 200);
 });
 
 // ブラウザツールバー表示/非表示時の対応
@@ -408,6 +429,28 @@ function animate() {
         }
     });
 }
+
+// アニメーションループ内で常にチェック（ツールバー表示等の変化に対応）
+/*function animate() {
+    requestAnimationFrame(animate);
+    
+    // レイアウト変更に即座に対応
+    updateRendererSize();
+
+    // 既存の処理
+    displayLayer += (currentLayer - displayLayer) * (winningLine ? 0.2 : 0.1);
+    updateLayerVisualSmooth(displayLayer);
+    controls.update();
+    renderer.render(scene, camera);
+    
+    pulseTime += 0.1;
+    scene.children.forEach(obj => {
+        if (obj.userData && obj.userData.velocity) {
+            obj.position.add(obj.userData.velocity);
+        }
+    });
+}*/
+
 animate();
 
 
