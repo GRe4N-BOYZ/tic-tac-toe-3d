@@ -202,6 +202,10 @@ button.active {
     background: linear-gradient(145deg, #00ffcc, #0099cc);
 }
 
+#layerCenter {
+    background: linear-gradient(145deg, #cc66cc, #664db3);
+}
+
 #layerDown {
     background: linear-gradient(145deg, #ff66cc, #cc0099);
 }

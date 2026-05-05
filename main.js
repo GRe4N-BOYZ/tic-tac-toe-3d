@@ -39,6 +39,7 @@ let hoverTarget = null;
 let displayLayer = currentLayer; // 表示用の変数（勝利ライン表示のために分ける）
 let pulseTime = 0;
 let isMobile = window.innerWidth <= 768; // 画面幅768px以下をモバイルと判断
+let lastMove = null; //{x, y, z}を保存する
 
 const boardDiv = document.getElementById("board");
 const statusText = document.getElementById("status");
@@ -46,6 +47,7 @@ const layerText = document.getElementById("layerText");
 
 const resetBtn = document.getElementById("resetBtn");
 const layerUpBtn = document.getElementById("layerUp");
+const layerCenterBtn = document.getElementById("layerCenter");
 const layerDownBtn = document.getElementById("layerDown");
 const localModeBtn = document.getElementById("localModeBtn");
 const cpuModeBtn = document.getElementById("cpuModeBtn");
@@ -61,11 +63,15 @@ const humanSymbol = 'O';
 
 
 layerUpBtn.addEventListener("click", () => {
-    currentLayer = Math.min(2, currentLayer + 1);
+    currentLayer = 2;
+    updateLayerVisual();
+});
+layerCenterBtn.addEventListener("click", () => {
+    currentLayer = 1;
     updateLayerVisual();
 });
 layerDownBtn.addEventListener("click", () => {
-    currentLayer = Math.max(0, currentLayer - 1);
+    currentLayer = 0;
     updateLayerVisual();
 });
 
@@ -209,6 +215,7 @@ function isCorner(x, y) {
 
 function resetGame() {
     winningLine = null; // 勝利ラインリセット
+    lastMove = null; //記録リセット
     pulseTime = 0; // パルスリセット
     displayLayer = 1; // 表示層リセット
 
@@ -292,6 +299,9 @@ function handleClick(x, y, z, group) {
     if (board[z][y][x] !== "" || gameOver) return;
     
     board[z][y][x] = currentPlayer;
+
+    //最後に置いた場所の更新
+    lastMove = {x, y, z};
 
     const piece = currentPlayer === 'O' ? createO() : createX();
     
@@ -652,6 +662,14 @@ function updateLayerVisualSmooth(layer) {
             
             cube.material.color.setRGB(1, 1, pulse);
             cube.material.opacity = 0.7 + pulse * 0.3;
+            return;
+        }
+
+        if (lastMove && lastMove.x === x && lastMove.y === y && lastMove.z === z) {
+            //sin波を使って、うっすら光らせる
+            const pulse = (Math.sin(pulseTime * 2) + 1) / 2;
+            cube.material.color.set(0x00ff00);//黄色っぽく光らせる
+            cube.material.opacity = 0.6;
             return;
         }
 
