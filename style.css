@@ -146,6 +146,7 @@ canvas {
     z-index: 10;
     padding-bottom: calc(16px + env(safe-area-inset-bottom));
     overflow: hidden;
+    overflow-y: auto;
 }
 
 #ui button {
@@ -219,7 +220,7 @@ button.active {
     body {
         display: grid;
         grid-template-rows: auto 1fr;
-        grid-template-columns: 280px 1fr; /* ←ここ変更🔥 */
+        grid-template-columns: 320px 1fr; /* ←ここ変更🔥 */
     }
 
     #title {
@@ -235,17 +236,36 @@ button.active {
     #ui {
         grid-row: 2;
         grid-column: 1;
-        width: 280px;
+        width: 320px;
         height: 100%;
         align-self: stretch;
+        padding: 20px;
     }
 
     #buttons {
         flex-direction: column;
+             /* ③ボタンを大きくする設定 */
+        font-size: 22px;    /* 文字を大きく（元は14〜20px） */
+        padding: 18px;      /* 中の余白を増やしてボタン自体を大きく */
+        margin: 8px 0;      /* ボタン同士の間隔を広げる */
+        width: 100%;        /* 横幅いっぱい */
     }
 
     #buttons button {
         width: 100%;
+             /* ③ボタンを大きくする設定 */
+        font-size: 22px;    /* 文字を大きく（元は14〜20px） */
+        padding: 18px;      /* 中の余白を増やしてボタン自体を大きく */
+        margin: 8px 0;      /* ボタン同士の間隔を広げる */
+        width: 100%;        /* 横幅いっぱい */
+    }
+
+    #difficultyButtons button {
+        /* ③ボタンを大きくする設定 */
+        font-size: 22px;    /* 文字を大きく（元は14〜20px） */
+        padding: 18px;      /* 中の余白を増やしてボタン自体を大きく */
+        margin: 8px 0;      /* ボタン同士の間隔を広げる */
+        width: 100%;        /* 横幅いっぱい */
     }
 }
 
@@ -289,7 +309,6 @@ button.active {
         padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
         background: rgba(0, 0, 0, 0.92);
         gap: 8px;
-        overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         box-sizing: border-box;
     }
